@@ -17,6 +17,7 @@ export function AuditForm() {
   const [isUnlocked, setIsUnlocked] = useState(false);
   const [aiSummary, setAiSummary] = useState<string>('');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [shareId, setShareId] = useState<string | null>(null);
 
   const { register, control, handleSubmit, watch, setValue, reset } = useForm({
     defaultValues: {
@@ -53,8 +54,9 @@ export function AuditForm() {
     setIsUnlocked(false); // Reset lock when new audit is run
   };
 
-  const handleLeadSuccess = async () => {
-    setIsUnlocked(true);
+  const handleLeadSuccess = async (id: string) => {
+  setShareId(id); 
+  setIsUnlocked(true);
     setIsGenerating(true);
     
     const totalSavings = results.reduce((acc, curr) => acc + curr.potentialSavings, 0);
@@ -177,8 +179,26 @@ export function AuditForm() {
                     <Button className="w-full bg-blue-600 hover:bg-blue-500 flex gap-2">
                       <Calendar className="w-4 h-4" /> Book a Consultation
                     </Button>
+            
                   </div>
                 )}
+                <div className="mt-4 pt-4 border-t border-zinc-800">
+                <Button 
+                  variant="ghost" 
+                  type="button"
+                  className="w-full text-zinc-400 hover:text-white hover:bg-zinc-800 flex gap-2"
+                  onClick={() => {
+                    if (shareId) {
+                      const url = `${window.location.origin}/share/${shareId}`;
+                      navigator.clipboard.writeText(url);
+                      alert("Audit link copied to clipboard!");
+                    }
+                  }}
+                >
+                  Copy Shareable Audit URL
+                </Button>
+              </div>
+
               </CardContent>
             </Card>
           )}
