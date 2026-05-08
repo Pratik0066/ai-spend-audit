@@ -7,12 +7,16 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Label } from '@/components/ui/label';
-import { Trash2, PlusCircle } from 'lucide-react';
+import { Trash2, PlusCircle, Sparkles, Calendar } from 'lucide-react';
 import { runAudit } from '@/lib/audit-engine';
 import { AuditResult } from '@/lib/types';
+import { LeadCapture } from './lead-capture'; // Ensure this file exists
 
 export function AuditForm() {
   const [results, setResults] = useState<AuditResult[]>([]);
+  const [isUnlocked, setIsUnlocked] = useState(false);
+  const [aiSummary, setAiSummary] = useState<string>('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const { register, control, handleSubmit, watch, setValue, reset } = useForm({
     defaultValues: {
@@ -25,35 +29,51 @@ export function AuditForm() {
     name: "tools"
   });
 
-  // Load from LocalStorage
+  const watchedFields = watch();
+
   useEffect(() => {
     const saved = localStorage.getItem('audit-form-data');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        if (parsed.tools && parsed.tools.length > 0) {
-          reset(parsed);
-        }
-      } catch (e) {
-        console.error("Error loading persistence", e);
-      }
+        if (parsed.tools?.length > 0) reset(parsed);
+      } catch (e) { console.error(e); }
     }
   }, [reset]);
 
-  // Save to LocalStorage
-  const watchedFields = watch();
   useEffect(() => {
-    if (watchedFields.tools && watchedFields.tools.length > 0) {
+    if (watchedFields.tools?.length > 0) {
       localStorage.setItem('audit-form-data', JSON.stringify(watchedFields));
     }
   }, [watchedFields]);
 
-  // Handle Form Submission
   const onSubmit = (data: any) => {
-    // This is the missing piece! 
     const auditResults = runAudit(data.tools);
     setResults(auditResults);
+    setIsUnlocked(false); // Reset lock when new audit is run
   };
+
+  const handleLeadSuccess = async () => {
+    setIsUnlocked(true);
+    setIsGenerating(true);
+    
+    const totalSavings = results.reduce((acc, curr) => acc + curr.potentialSavings, 0);
+    try {
+      const res = await fetch('/api/summarize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ auditResults: results, totalSavings }),
+      });
+      const data = await res.json();
+      setAiSummary(data.summary);
+    } catch (e) {
+      setAiSummary("Your stack has significant overlap. Consolidating into Cursor and downgrading unused Team seats is the fastest path to the identified savings.");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const totalMonthlySavings = results.reduce((acc, curr) => acc + curr.potentialSavings, 0);
 
   return (
     <div className="space-y-10">
@@ -67,9 +87,7 @@ export function AuditForm() {
                   defaultValue={field.name} 
                   onValueChange={(val) => setValue(`tools.${index}.name`, val as any)}
                 >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select tool" />
-                  </SelectTrigger>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Cursor">Cursor</SelectItem>
                     <SelectItem value="Claude">Claude</SelectItem>
@@ -78,23 +96,15 @@ export function AuditForm() {
                   </SelectContent>
                 </Select>
               </div>
-
               <div className="space-y-2">
                 <Label>Monthly Spend ($)</Label>
                 <Input type="number" {...register(`tools.${index}.monthlySpend`, { valueAsNumber: true })} />
               </div>
-
               <div className="space-y-2">
                 <Label>Seats</Label>
                 <Input type="number" {...register(`tools.${index}.seatCount`, { valueAsNumber: true })} />
               </div>
-
-              <Button 
-                variant="destructive" 
-                type="button" 
-                onClick={() => remove(index)}
-                className="w-full md:w-auto"
-              >
+              <Button variant="destructive" type="button" onClick={() => remove(index)}>
                 <Trash2 className="w-4 h-4" />
               </Button>
             </div>
@@ -102,45 +112,27 @@ export function AuditForm() {
         ))}
 
         <div className="flex gap-4">
-          <Button 
-            variant="outline" 
-            type="button" 
-            onClick={() => append({ name: 'ChatGPT', tier: 'Plus' as any, monthlySpend: 20, seatCount: 1 })}
-            className="flex gap-2"
-          >
-            <PlusCircle className="w-4 h-4" /> Add Tool
+          <Button variant="outline" type="button" onClick={() => append({ name: 'ChatGPT', tier: 'Plus' as any, monthlySpend: 20, seatCount: 1 })}>
+            <PlusCircle className="w-4 h-4 mr-2" /> Add Tool
           </Button>
-          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">
-            Run Audit
-          </Button>
+          <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Run Audit</Button>
         </div>
       </form>
 
-      {/* Audit Results Rendering */}
       {results.length > 0 && (
-        <div className="mt-12 space-y-6 border-t pt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="mt-12 space-y-8 border-t pt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <Card className="bg-blue-600 text-white border-none shadow-lg">
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-80">Total Monthly Savings</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-bold">${totalMonthlySavings}</p></CardContent>
+            </Card>
+            <Card className="bg-zinc-900 text-white border-none shadow-lg">
+              <CardHeader className="pb-2"><CardTitle className="text-sm font-medium opacity-80">Total Annual Savings</CardTitle></CardHeader>
+              <CardContent><p className="text-4xl font-bold">${totalMonthlySavings * 12}</p></CardContent>
+            </Card>
+          </div>
 
-        {/* NEW HERO SECTION */}
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <Card className="bg-blue-600 text-white border-none shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium opacity-80 text-white">Total Monthly Savings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">${results.reduce((acc, curr) => acc + curr.potentialSavings, 0)}</p>
-        </CardContent>
-      </Card>
-      <Card className="bg-zinc-900 text-white border-none shadow-lg">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-sm font-medium opacity-80 text-white">Total Annual Savings</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className="text-4xl font-bold">${results.reduce((acc, curr) => acc + curr.potentialSavings, 0) * 12}</p>
-        </CardContent>
-      </Card>
-    </div>
-
-          <h3 className="text-2xl font-bold">Your Audit Results</h3>
+          <h3 className="text-2xl font-bold">Optimization Breakdown</h3>
           <div className="grid gap-4">
             {results.map((res, i) => (
               <Card key={i} className="border-l-4 border-l-green-500 bg-green-50/30">
@@ -151,17 +143,49 @@ export function AuditForm() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="font-semibold text-zinc-700 underline decoration-green-200">Action: {res.recommendedAction}</p>
-                  <p className="text-sm text-zinc-500 mt-2 leading-relaxed">{res.reasoning}</p>
+                  <p className="font-semibold text-zinc-700">Action: {res.recommendedAction}</p>
+                  <p className="text-sm text-zinc-500 mt-2">{res.reasoning}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
+
+          {/* LEAD CAPTURE & AI SUMMARY LOGIC */}
+          {!isUnlocked ? (
+            <LeadCapture 
+              totalSavings={totalMonthlySavings} 
+              onComplete={handleLeadSuccess} 
+            />
+          ) : (
+            <Card className="bg-zinc-900 text-white p-6 border-none shadow-xl">
+              <CardHeader>
+                <CardTitle className="text-blue-400 flex items-center gap-2">
+                  <Sparkles className="w-5 h-5" /> Expert Personalized Analysis
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {isGenerating ? (
+                  <div className="animate-pulse text-zinc-400 italic">Claude is analyzing your stack...</div>
+                ) : (
+                  <p className="leading-relaxed italic text-zinc-200">"{aiSummary}"</p>
+                )}
+                
+                {/* REQUIREMENT: Surface Credex prominently for high savings */}
+                {totalMonthlySavings > 100 && (
+                  <div className="pt-6 border-t border-zinc-800">
+                    <p className="text-sm text-zinc-400 mb-4">Your savings are significant. Credex can help you claim these discounts today through our credit marketplace.</p>
+                    <Button className="w-full bg-blue-600 hover:bg-blue-500 flex gap-2">
+                      <Calendar className="w-4 h-4" /> Book a Consultation
+                    </Button>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
       )}
-      
-      {/* Fallback for when no savings are found */}
-      {results.length === 0 && watchedFields.tools.length > 0 && (
+
+      {results.length === 0 && watchedFields.tools?.length > 0 && (
         <div className="text-center text-zinc-400 py-10 border-t">
           Enter your tools and click "Run Audit" to see potential savings.
         </div>

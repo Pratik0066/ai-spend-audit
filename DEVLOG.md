@@ -10,3 +10,12 @@
 **Blockers / what I'm stuck on:** Verifying if the Anthropic "Team" plan seat minimums changed this month (confirmed: still 5 seats for Premium).
 
 **Plan for tomorrow:** Build the multi-step input form and implement the first three tool optimization rules.
+
+
+## Day 2 — 2026-05-08 (Update 2)
+**What I did:**
+- Integrated Supabase for lead capture and database storage.
+- Created an Email Lead Gate to satisfy the "Email Gate" requirement in the assignment.
+- Set up environment variable structure for secure API handling.
+
+**Blockers:** Waiting for Anthropic API credits to test the live summary generation.
