@@ -1,13 +1,25 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
 
+// Define expected body structure to eliminate 'any'
+interface SummarizeRequest {
+  auditResults: Array<{
+    toolName: string;
+    potentialSavings: number;
+    recommendedAction: string;
+    reasoning: string;
+  }>;
+  totalSavings: number;
+}
+
 const anthropic = new Anthropic({
   apiKey: process.env.ANTHROPIC_API_KEY || '',
 });
 
 export async function POST(req: Request) {
   try {
-    const { auditResults, totalSavings } = await req.json();
+    const body = (await req.json()) as SummarizeRequest;
+    const { auditResults, totalSavings } = body;
 
     const prompt = `You are a startup finance expert. Review these AI audit results:
     ${JSON.stringify(auditResults)}
@@ -21,22 +33,22 @@ export async function POST(req: Request) {
       const response = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20240620",
         max_tokens: 200,
-        messages: [{ role: "user", content: prompt }], // Now using the dynamic prompt
+        messages: [{ role: "user", content: prompt }],
       });
 
-      // Handle the response based on Anthropic SDK structure
       const text = response.content[0].type === 'text' ? response.content[0].text : '';
       return NextResponse.json({ summary: text });
       
-    } catch (apiError: any) {
-      // Logic for Day 4: Return a high-quality fallback if billing or API fails
-      console.error("AI Summary Error (API):", apiError.message);
+    } catch (apiError: unknown) {
+      const errorMessage = apiError instanceof Error ? apiError.message : "Unknown API Error";
+      console.error("AI Summary Error (API):", errorMessage);
       return NextResponse.json({ 
         summary: "Your stack shows significant tool overlap. We recommend consolidating redundant IDE extensions into Cursor and reviewing unused ChatGPT Team seats to capture the identified savings immediately." 
       });
     }
-  } catch (parseError: any) {
-    console.error("AI Summary Error (Request):", parseError.message);
+  } catch (parseError: unknown) {
+    const errorMessage = parseError instanceof Error ? parseError.message : "Invalid Request";
+    console.error("AI Summary Error (Request):", errorMessage);
     return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
   }
 }

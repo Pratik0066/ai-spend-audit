@@ -9,8 +9,12 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Trash2, PlusCircle, Sparkles, Calendar } from 'lucide-react';
 import { runAudit } from '@/lib/audit-engine';
-import { AuditResult } from '@/lib/types';
-import { LeadCapture } from './lead-capture'; // Ensure this file exists
+import { AuditResult, ToolInput } from '@/lib/types'; // Ensure ToolInput is exported from your types
+import { LeadCapture } from './lead-capture';
+
+interface AuditFormData {
+  tools: ToolInput[];
+}
 
 export function AuditForm() {
   const [results, setResults] = useState<AuditResult[]>([]);
@@ -19,9 +23,9 @@ export function AuditForm() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
 
-  const { register, control, handleSubmit, watch, setValue, reset } = useForm({
+  const { register, control, handleSubmit, watch, setValue, reset } = useForm<AuditFormData>({
     defaultValues: {
-      tools: [{ name: 'Cursor', tier: 'Pro' as any, monthlySpend: 20, seatCount: 1 }]
+      tools: [{ name: 'Cursor', tier: 'Pro', monthlySpend: 20, seatCount: 1 }]
     }
   });
 
@@ -38,25 +42,27 @@ export function AuditForm() {
       try {
         const parsed = JSON.parse(saved);
         if (parsed.tools?.length > 0) reset(parsed);
-      } catch (e) { console.error(e); }
+      } catch (err) { 
+        console.error("Persistence Error:", err); 
+      }
     }
   }, [reset]);
 
   useEffect(() => {
-    if (watchedFields.tools?.length > 0) {
+    if (watchedFields.tools && watchedFields.tools.length > 0) {
       localStorage.setItem('audit-form-data', JSON.stringify(watchedFields));
     }
   }, [watchedFields]);
 
-  const onSubmit = (data: any) => {
+  const onSubmit = (data: AuditFormData) => {
     const auditResults = runAudit(data.tools);
     setResults(auditResults);
-    setIsUnlocked(false); // Reset lock when new audit is run
+    setIsUnlocked(false); 
   };
 
   const handleLeadSuccess = async (id: string) => {
-  setShareId(id); 
-  setIsUnlocked(true);
+    setShareId(id); 
+    setIsUnlocked(true);
     setIsGenerating(true);
     
     const totalSavings = results.reduce((acc, curr) => acc + curr.potentialSavings, 0);
@@ -68,7 +74,8 @@ export function AuditForm() {
       });
       const data = await res.json();
       setAiSummary(data.summary);
-    } catch (e) {
+    } catch (err) {
+      console.error("Summarization Error:", err);
       setAiSummary("Your stack has significant overlap. Consolidating into Cursor and downgrading unused Team seats is the fastest path to the identified savings.");
     } finally {
       setIsGenerating(false);
@@ -87,7 +94,7 @@ export function AuditForm() {
                 <Label>AI Tool</Label>
                 <Select 
                   defaultValue={field.name} 
-                  onValueChange={(val) => setValue(`tools.${index}.name`, val as any)}
+                  onValueChange={(val) => setValue(`tools.${index}.name`, val)}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
@@ -114,7 +121,7 @@ export function AuditForm() {
         ))}
 
         <div className="flex gap-4">
-          <Button variant="outline" type="button" onClick={() => append({ name: 'ChatGPT', tier: 'Plus' as any, monthlySpend: 20, seatCount: 1 })}>
+          <Button variant="outline" type="button" onClick={() => append({ name: 'ChatGPT', tier: 'Plus', monthlySpend: 20, seatCount: 1 })}>
             <PlusCircle className="w-4 h-4 mr-2" /> Add Tool
           </Button>
           <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Run Audit</Button>
@@ -152,7 +159,6 @@ export function AuditForm() {
             ))}
           </div>
 
-          {/* LEAD CAPTURE & AI SUMMARY LOGIC */}
           {!isUnlocked ? (
             <LeadCapture 
               totalSavings={totalMonthlySavings} 
@@ -172,42 +178,34 @@ export function AuditForm() {
                   <p className="leading-relaxed italic text-zinc-200">"{aiSummary}"</p>
                 )}
                 
-                {/* REQUIREMENT: Surface Credex prominently for high savings */}
                 {totalMonthlySavings > 100 && (
                   <div className="pt-6 border-t border-zinc-800">
                     <p className="text-sm text-zinc-400 mb-4">Your savings are significant. Credex can help you claim these discounts today through our credit marketplace.</p>
                     <Button className="w-full bg-blue-600 hover:bg-blue-500 flex gap-2">
                       <Calendar className="w-4 h-4" /> Book a Consultation
                     </Button>
-            
                   </div>
                 )}
+                
                 <div className="mt-4 pt-4 border-t border-zinc-800">
-                <Button 
-                  variant="ghost" 
-                  type="button"
-                  className="w-full text-zinc-400 hover:text-white hover:bg-zinc-800 flex gap-2"
-                  onClick={() => {
-                    if (shareId) {
-                      const url = `${window.location.origin}/share/${shareId}`;
-                      navigator.clipboard.writeText(url);
-                      alert("Audit link copied to clipboard!");
-                    }
-                  }}
-                >
-                  Copy Shareable Audit URL
-                </Button>
-              </div>
-
+                  <Button 
+                    variant="ghost" 
+                    type="button"
+                    className="w-full text-zinc-400 hover:text-white hover:bg-zinc-800 flex gap-2"
+                    onClick={() => {
+                      if (shareId) {
+                        const url = `${window.location.origin}/share/${shareId}`;
+                        navigator.clipboard.writeText(url);
+                        alert("Audit link copied to clipboard!");
+                      }
+                    }}
+                  >
+                    Copy Shareable Audit URL
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           )}
-        </div>
-      )}
-
-      {results.length === 0 && watchedFields.tools?.length > 0 && (
-        <div className="text-center text-zinc-400 py-10 border-t">
-          Enter your tools and click "Run Audit" to see potential savings.
         </div>
       )}
     </div>
