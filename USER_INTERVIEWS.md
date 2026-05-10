@@ -34,18 +34,23 @@ Direct Quotes
 "The devs want Cursor, the marketing team wants ChatGPT Plus... It's a mess."
 "If you showed me I could save $1,000 across the year with one click, I’d authorize that immediately."
 
-Interview 3: The "Comfort-First" Freelancer
-Role: Senior Frontend Freelancer
-Current Stack: Cursor (Pro), ChatGPT Plus
+Interview 3: The Solo Power-User
+Role: Solo Full-Stack Developer with professional experience.
 
-Key Findings
-The "UI Tax": Views the $20/mo subscription as a necessary "productivity tax" for visual comfort.
+Current Stack: Cursor (Pro).
 
-Mobile Utility: Keeps ChatGPT Plus primarily for non-coding features like Voice Mode and mobile access.
+Key Findings:
 
-Switching Friction: Locked in by custom GPTs and established workflows.
+Platform over Model: Unlike users who see AI as a simple wrapper, this user values the integrated ecosystem (indexing docs, web search, and specialized modes like planning/debugging).
 
-Direct Quotes
-"I know I could save money using the API, but I’m a visual person. I’ll pay the 'Cursor tax'..."
-"I keep ChatGPT Plus specifically for the voice mode while I'm driving."
-"Unless you can migrate my 50+ Custom GPTs... I’m probably not moving."
+Flexibility as Retention: The ability to "Bring Your Own Key" (BYOK) and use diverse models like DeepSeek or Kimi is a major selling point, even if those models aren't fully compatible with all features.
+
+The Barrier to Switching: Hypothetically, a $150/month saving isn't enough to switch because the workflow features (docs system, indexing) are more valuable than the raw subscription cost.
+
+Direct Quotes:
+
+"Cursor is not just a wrapper of AI models but rather more than that."
+
+"What is stopping me from switching is the features... it offers docs system and able to index any website."
+
+"...you are not locked with just GPT models, you are also able to use Gemini, Claude, Grok, DeepSeek, Kimi, and even bringing your own key."
