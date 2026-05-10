@@ -94,7 +94,7 @@ export function AuditForm() {
                 <Label>AI Tool</Label>
                 <Select 
                   defaultValue={field.name} 
-                  onValueChange={(val) => setValue(`tools.${index}.name`, val)}
+                  onValueChange={(val) => setValue(`tools.${index}.name`, val as typeof field.name)}
                 >
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
