@@ -1,9 +1,14 @@
 # Go-To-Market Strategy
 
-## Target Persona
-**"The Over-Subscribed CTO"** at a 20-person startup. They have developers using Cursor, while the marketing team uses ChatGPT Team, and they are paying for both without realizing the overlap.
+## The "Contradiction" Hook
+- **The Angle:** "Cursor is highway robbery: Why you are paying for redundant Copilot seats".
+- **The Proof:** Use Rule 1 and Rule 5 results to show founders they are paying twice for the same underlying LLM context.
 
-## Distribution
-1. **The "Comparison" Hook:** Post on X/LinkedIn comparing the new 2026 Claude Max vs. ChatGPT Pro tiers.
-2. **Niche Communities:** Submit to "Vibe Coding" Discord servers and "IndieHackers."
-3. **The Viral Loop:** "Share your savings" button creates a pre-filled tweet: *"I just cut my AI bill by 30% using [Tool Name]."*
+## Strategic Distribution Channels
+1. **The Cursor Discord:** Direct outreach in "General" and "Ideas" channels where users complain about sub-costs.
+2. **The Vibe-Coding Community:** Target "solo-man" startups on X (Twitter) who are managing 10+ AI tools alone.
+3. **Product Hunt "Side-Launch":** Launch as a free "financial health check" for AI-first startups.
+
+## 30-Day Conversion Goal
+- **First 100 Users:** Via direct engagement in the Cursor and Claude subreddits.
+- **Conversion:** Drive 5% of users to book a Credex consultation by surfacing the "Book a Consultation" button ONLY for audits showing >$100 in monthly waste.
