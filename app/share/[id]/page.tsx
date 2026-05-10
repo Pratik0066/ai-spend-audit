@@ -9,11 +9,12 @@ const supabase = createClient(
 );
 
 export default async function SharePage({ params }: { params: { id: string } }) {
-  // Fetch data from Supabase server-side
-  const { data: lead, error } = await supabase
+  const { id } = await params;
+  
+ const { data: lead, error } = await supabase
     .from('leads')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', id) 
     .single();
 
   if (error || !lead) {

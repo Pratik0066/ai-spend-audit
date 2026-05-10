@@ -17,20 +17,26 @@ export async function POST(req: Request) {
     Highlight the single biggest waste and tell the founder exactly what to do first. 
     Be direct. Do not use generic introductions.`;
 
-    const response = await anthropic.messages.create({
-      model: "claude-3-5-sonnet-20240620", // Using the 2026 industry standard
-      max_tokens: 200,
-      messages: [{ role: "user", content: prompt }],
-    });
+    try {
+      const response = await anthropic.messages.create({
+        model: "claude-3-5-sonnet-20240620",
+        max_tokens: 200,
+        messages: [{ role: "user", content: prompt }], // Now using the dynamic prompt
+      });
 
-    const content = response.content[0].type === 'text' ? response.content[0].text : 'Summary unavailable.';
-
-    return NextResponse.json({ summary: content });
-  } catch (error) {
-    console.error('AI Summary Error:', error);
-    // Requirement: Fallback to templated summary on failure
-    return NextResponse.json({ 
-      summary: "Based on your audit, there are clear opportunities to optimize your AI stack. We recommend starting with your highest-cost tools and consolidating redundant licenses to capture the identified savings immediately."
-    });
+      // Handle the response based on Anthropic SDK structure
+      const text = response.content[0].type === 'text' ? response.content[0].text : '';
+      return NextResponse.json({ summary: text });
+      
+    } catch (apiError: any) {
+      // Logic for Day 4: Return a high-quality fallback if billing or API fails
+      console.error("AI Summary Error (API):", apiError.message);
+      return NextResponse.json({ 
+        summary: "Your stack shows significant tool overlap. We recommend consolidating redundant IDE extensions into Cursor and reviewing unused ChatGPT Team seats to capture the identified savings immediately." 
+      });
+    }
+  } catch (parseError: any) {
+    console.error("AI Summary Error (Request):", parseError.message);
+    return NextResponse.json({ error: "Invalid request data" }, { status: 400 });
   }
 }

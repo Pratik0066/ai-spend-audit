@@ -6,13 +6,13 @@ import { Input } from './ui/input';
 import { Button } from './ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 
-console.log("Checking URL:", process.env.NEXT_PUBLIC_SUPABASE_URL);
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export function LeadCapture({ totalSavings, onComplete }: { totalSavings: number, onComplete: () => void }) {
+// UPDATE: Added string parameter to onComplete to pass back the DB ID
+export function LeadCapture({ totalSavings, onComplete }: { totalSavings: number, onComplete: (id: string) => void }) {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -20,20 +20,22 @@ export function LeadCapture({ totalSavings, onComplete }: { totalSavings: number
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase
+    // UPDATE: select('id') is required to get the UUID back for the shareable link
+    const { data, error } = await supabase
       .from('leads')
       .insert([{ 
         email, 
         total_savings: totalSavings,
-        // Pro tip: adding a created_at check helps with debugging later
-      }]);
+      }])
+      .select('id')
+      .single();
 
-    if (!error) {
+    if (!error && data) {
       console.log("Lead captured successfully!");
-      onComplete(); // This tells AuditForm.tsx to show the AI summary
+      onComplete(data.id); 
     } else {
-      console.error("Supabase Error:", error.message);
-      alert("Something went wrong. Please check the console.");
+      console.error("Supabase Error:", error?.message);
+      alert("Submission failed. Please try again.");
     }
     setLoading(false);
   };
@@ -50,6 +52,7 @@ export function LeadCapture({ totalSavings, onComplete }: { totalSavings: number
             type="email" 
             placeholder="founder@company.com" 
             required 
+            autoComplete="email"
             className="bg-white border-blue-200 focus:ring-blue-500"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
