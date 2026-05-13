@@ -34,14 +34,16 @@ export async function POST(req: Request) {
       const text = response.content[0].type === 'text' ? response.content[0].text : '';
       return NextResponse.json({ summary: text });
       
-    } catch (apiError: unknown) {
-      // Production-grade error handling (no 'any')
+    } // Inside your apiError catch block in route.ts
+     catch (apiError: unknown) {
       const errorMessage = apiError instanceof Error ? apiError.message : "Unknown API Error";
       console.error("AI Summary Error (API):", errorMessage);
       
+      // IMPROVED FALLBACK: Uses the actual totalSavings to feel personalized
       return NextResponse.json({ 
-        summary: "Your stack shows significant tool overlap. We recommend consolidating redundant IDE extensions into Cursor and reviewing unused ChatGPT Team seats to capture the identified savings immediately." 
+        summary: `Your stack has ${auditResults.length} critical optimization points identified. By consolidating redundant tools and rightsizing your seat counts, you can reclaim $${totalSavings}/mo in immediate runway. We recommend starting with your highest-cost overlap first.` 
       });
+    
     }
   } catch (parseError: unknown) {
     const errorMessage = parseError instanceof Error ? parseError.message : "Invalid Request";
