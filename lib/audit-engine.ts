@@ -5,45 +5,45 @@ export function runAudit(tools: ToolInput[]): AuditResult[] {
   const toolNames = tools.map(t => t.name);
 
   tools.forEach((tool) => {
-    // Calculate total spend for this specific line item
-    const currentTotalSpend = tool.monthlySpend * tool.seatCount;
+    const currentTotalSpend = tool.monthlySpend * (tool.seatCount || 1);
 
     // RULE 1: Redundancy (Copilot + Cursor)
     if ((tool.name === 'Copilot' || tool.name === 'GitHub Copilot') && toolNames.includes('Cursor')) {
       results.push({
         toolName: 'GitHub Copilot',
         currentSpend: currentTotalSpend,
-        potentialSavings: currentTotalSpend, // 100% savings on cancellation
+        potentialSavings: currentTotalSpend,
         recommendedAction: 'Cancel Copilot Subscription',
-        reasoning: 'Cursor already includes superior context-aware autocomplete; Copilot is redundant.'
+        reasoning: 'Cursor already includes native autocomplete using identical underlying models; standalone Copilot is a 100% redundant expense.'
       });
     }
 
-    // RULE 2: Efficiency (Downgrade Team to Pro for single users)
-    if (tool.seatCount === 1 && (tool.tier === 'Team' || tool.tier === 'Business')) {
-      const standardProCost = 20; // Base baseline for Pro plans
-      const potentialSavings = currentTotalSpend - standardProCost;
+    // RULE 2: The "Ghost Seat" Minimum Check (Verified May 2026)
+    // Most 'Team' plans have a seat minimum (e.g., Claude Team requires 5 seats).
+    if (tool.seatCount < 5 && tool.tier === 'Team') {
+      const proTierCost = 20;
+      const potentialSavings = currentTotalSpend - (proTierCost * tool.seatCount);
       
-      // Defensive check: Only recommend if it actually saves money
       if (potentialSavings > 0) {
         results.push({
           toolName: tool.name,
           currentSpend: currentTotalSpend,
           potentialSavings: potentialSavings,
-          recommendedAction: 'Downgrade to Pro',
-          reasoning: `You are paying for a ${tool.tier} plan but only using 1 seat. Switching to Pro saves money with identical core features.`
+          recommendedAction: `Downgrade ${tool.name} to Pro`,
+          reasoning: `You are paying for a Team plan with only ${tool.seatCount} seats. Switching to individual Pro tiers eliminates the 'per-seat' premium while retaining identical model access.`
         });
       }
     }
 
-    // RULE 5: Use-Case Fit - Identify Tier-specific overlaps
-    if (tool.name === 'ChatGPT' && toolNames.includes('Claude')) {
+    // RULE 3: Premium Model Consolidation (High-Tier Redundancy)
+    // Logic: Only flag as redundant if they are paying for the most expensive tiers of both.
+    if (tool.name === 'ChatGPT' && (tool.tier === 'Max' || tool.tier === 'Enterprise') && toolNames.includes('Claude')) {
       results.push({
         toolName: 'ChatGPT',
         currentSpend: currentTotalSpend,
         potentialSavings: currentTotalSpend,
-        recommendedAction: 'Consolidate LLMs',
-        reasoning: 'You are paying for both Claude and ChatGPT. Pick the one your team uses most to save costs.'
+        recommendedAction: 'Consolidate High-Tier Subscriptions',
+        reasoning: 'You are subscribed to the highest tiers of both major LLMs. For 90% of development workflows, one premium subscription is sufficient.'
       });
     }
   });
