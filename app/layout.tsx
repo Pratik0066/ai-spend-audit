@@ -14,9 +14,12 @@ const geistMono = Geist_Mono({
 
 // PRODUCTION FIX: Added proper SEO and mandatory Open Graph metadata
 export const metadata: Metadata = {
+  // Add this line right here at the top! Use your actual Vercel deployment URL.
+  metadataBase: new URL('https://your-project-name.vercel.app'), 
+  
   title: "AI Spend Auditor | Credex",
   description: "Most startups overpay for AI by 30%. Get an instant audit of your stack and cut the waste in 60 seconds.",
-  openGraph: {
+  openGraph:{
     title: "AI Spend Auditor | Cut Your AI Bill",
     description: "Most startups overpay for AI by 30%. Run a free audit on your stack.",
     url: 'https://your-deployment-url.vercel.app', // Update this when deploying!
