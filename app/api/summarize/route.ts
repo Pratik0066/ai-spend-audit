@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
 import Anthropic from '@anthropic-ai/sdk';
+import { AuditResult } from '@/lib/types';
 
-// Define expected body structure to eliminate 'any'
+// Strict typing for the incoming request body
 interface SummarizeRequest {
-  auditResults: Array<{
-    toolName: string;
-    potentialSavings: number;
-    recommendedAction: string;
-    reasoning: string;
-  }>;
+  auditResults: AuditResult[];
   totalSavings: number;
 }
 
@@ -18,8 +14,7 @@ const anthropic = new Anthropic({
 
 export async function POST(req: Request) {
   try {
-    const body = (await req.json()) as SummarizeRequest;
-    const { auditResults, totalSavings } = body;
+    const { auditResults, totalSavings } = (await req.json()) as SummarizeRequest;
 
     const prompt = `You are a startup finance expert. Review these AI audit results:
     ${JSON.stringify(auditResults)}
@@ -33,15 +28,17 @@ export async function POST(req: Request) {
       const response = await anthropic.messages.create({
         model: "claude-3-5-sonnet-20240620",
         max_tokens: 200,
-        messages: [{ role: "user", content: prompt }],
+        messages: [{ role: "user", content: prompt }], 
       });
 
       const text = response.content[0].type === 'text' ? response.content[0].text : '';
       return NextResponse.json({ summary: text });
       
     } catch (apiError: unknown) {
+      // Production-grade error handling (no 'any')
       const errorMessage = apiError instanceof Error ? apiError.message : "Unknown API Error";
       console.error("AI Summary Error (API):", errorMessage);
+      
       return NextResponse.json({ 
         summary: "Your stack shows significant tool overlap. We recommend consolidating redundant IDE extensions into Cursor and reviewing unused ChatGPT Team seats to capture the identified savings immediately." 
       });

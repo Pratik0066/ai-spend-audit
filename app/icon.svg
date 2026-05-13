@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256">
+  <defs>
+    <linearGradient id="credexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1E3A8A" /> <stop offset="100%" stop-color="#3B82F6" /> </linearGradient>
+  </defs>
+  
+  <rect width="256" height="256" rx="60" fill="url(#credexGrad)"/>
+  
+  <text x="48%" y="54%" font-family="system-ui, -apple-system, sans-serif" font-size="140" font-weight="900" fill="#FFFFFF" text-anchor="middle" dominant-baseline="middle">C</text>
+  
+  <path d="M170 50 L185 85 L220 100 L185 115 L170 150 L155 115 L120 100 L155 85 Z" fill="#93C5FD" opacity="0.9"/>
+</svg>

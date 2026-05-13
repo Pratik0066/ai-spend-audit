@@ -5,32 +5,43 @@ export function runAudit(tools: ToolInput[]): AuditResult[] {
   const toolNames = tools.map(t => t.name);
 
   tools.forEach((tool) => {
-    // RULE 1: Fix - Match the exact string expected by your test
-    if (tool.name === 'Copilot' && toolNames.includes('Cursor')) {
+    // Calculate total spend for this specific line item
+    const currentTotalSpend = tool.monthlySpend * tool.seatCount;
+
+    // RULE 1: Redundancy (Copilot + Cursor)
+    if ((tool.name === 'Copilot' || tool.name === 'GitHub Copilot') && toolNames.includes('Cursor')) {
       results.push({
         toolName: 'GitHub Copilot',
-        potentialSavings: tool.monthlySpend * tool.seatCount,
-        recommendedAction: 'Cancel Copilot Subscription', // Matches your test line 16
+        currentSpend: currentTotalSpend,
+        potentialSavings: currentTotalSpend, // 100% savings on cancellation
+        recommendedAction: 'Cancel Copilot Subscription',
         reasoning: 'Cursor already includes superior context-aware autocomplete; Copilot is redundant.'
       });
     }
 
-    // RULE 2: Efficiency (Already passing)
-    if (tool.seatCount === 1 && tool.tier === 'Team') {
-      results.push({
-        toolName: tool.name,
-        potentialSavings: tool.monthlySpend - 20,
-        recommendedAction: 'Downgrade to Pro',
-        reasoning: 'You are paying for a Team plan but only using 1 seat.'
-      });
+    // RULE 2: Efficiency (Downgrade Team to Pro for single users)
+    if (tool.seatCount === 1 && (tool.tier === 'Team' || tool.tier === 'Business')) {
+      const standardProCost = 20; // Base baseline for Pro plans
+      const potentialSavings = currentTotalSpend - standardProCost;
+      
+      // Defensive check: Only recommend if it actually saves money
+      if (potentialSavings > 0) {
+        results.push({
+          toolName: tool.name,
+          currentSpend: currentTotalSpend,
+          potentialSavings: potentialSavings,
+          recommendedAction: 'Downgrade to Pro',
+          reasoning: `You are paying for a ${tool.tier} plan but only using 1 seat. Switching to Pro saves money with identical core features.`
+        });
+      }
     }
 
     // RULE 5: Use-Case Fit - Identify Tier-specific overlaps
-    // Logic: Suggest picking one high-end LLM if both are present
     if (tool.name === 'ChatGPT' && toolNames.includes('Claude')) {
       results.push({
         toolName: 'ChatGPT',
-        potentialSavings: tool.monthlySpend * tool.seatCount,
+        currentSpend: currentTotalSpend,
+        potentialSavings: currentTotalSpend,
         recommendedAction: 'Consolidate LLMs',
         reasoning: 'You are paying for both Claude and ChatGPT. Pick the one your team uses most to save costs.'
       });

@@ -13,12 +13,13 @@ describe('Audit Engine Logic Tests', () => {
     const results = runAudit(inputs);
     const copilotResult = results.find(r => r.toolName === 'GitHub Copilot');
     
+    expect(copilotResult).toBeDefined();
     expect(copilotResult?.recommendedAction).toBe('Cancel Copilot Subscription');
     expect(copilotResult?.potentialSavings).toBe(10);
+    expect(copilotResult?.currentSpend).toBe(10); // Verifying the new property
   });
 
   test('Rule 2: Efficiency - Recommends downgrading Team plan for a single user', () => {
-    // Note: You must ensure your runAudit logic handles this case
     const inputs: ToolInput[] = [
       { name: 'ChatGPT', tier: 'Team', monthlySpend: 30, seatCount: 1 }
     ];
@@ -26,6 +27,7 @@ describe('Audit Engine Logic Tests', () => {
     const results = runAudit(inputs);
     expect(results.length).toBeGreaterThan(0);
     expect(results[0].recommendedAction).toContain('Downgrade');
+    expect(results[0].currentSpend).toBe(30); // Verifying the new property
   });
 
   test('Rule 3: Honesty - No savings found for optimal spending', () => {
@@ -47,8 +49,10 @@ describe('Audit Engine Logic Tests', () => {
     const results = runAudit(inputs);
     const copilotResult = results.find(r => r.toolName === 'GitHub Copilot');
     
+    expect(copilotResult).toBeDefined();
     // 5 seats * $10 = $50 monthly savings
     expect(copilotResult?.potentialSavings).toBe(50);
+    expect(copilotResult?.currentSpend).toBe(50); // Verifying multi-seat spend
   });
 
   test('Rule 5: Use-Case Fit - Correctly identifies Tier-specific overlaps', () => {
@@ -58,7 +62,7 @@ describe('Audit Engine Logic Tests', () => {
     ];
     
     const results = runAudit(inputs);
-    // Logic: Suggesting to pick one high-end LLM instead of paying for both
     expect(results.length).toBeGreaterThan(0);
+    expect(results[0].recommendedAction).toBe('Consolidate LLMs');
   });
 });

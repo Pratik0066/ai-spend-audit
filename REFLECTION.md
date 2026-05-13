@@ -1,20 +1,20 @@
 # REFLECTION.md
 
-### 1. The hardest bug?
-Fixing the hydration race condition in the `AuditForm`. The `localStorage` was loading after the form initialized, causing it to overwrite saved data with defaults. I solved this by using the `reset()` method from `react-hook-form` inside a dedicated `useEffect` hook.
+### 1. The hardest bug you hit this week, and how you debugged it
+The most challenging bug I encountered was a hydration race condition within the `AuditForm` component caused by `localStorage` persistence. When a user refreshed the page, Next.js would render the default form values on the server (e.g., 1 seat of Cursor). However, the client would then mount and attempt to aggressively read the previous state from `localStorage`, resulting in a UI mismatch where the server-rendered HTML did not match the React virtual DOM. I initially hypothesized that I could fix this by checking `typeof window !== 'undefined'` during state initialization, but that still caused layout shifts. Ultimately, I debugged this by leveraging `react-hook-form`'s `reset()` method inside a dedicated `useEffect` hook. By waiting for the component to mount fully before resetting the form state with the parsed `localStorage` data, I eliminated the hydration error completely while maintaining state persistence across reloads.
 
-### 2. Decision reversed?
-I initially planned to generate the audit report PDF on the server. I reversed this to focus on the **Viral Loop** (Unique URLs) because the assignment prioritizes distribution over static downloads for Round 1[cite: 93].
+### 2. A decision you reversed mid-week, and what made you reverse it
+Mid-week, I completely reversed my architectural decision regarding the "Shareable Audit Report" feature. Initially, I planned to use a library like Puppeteer or `jspdf` to generate a static PDF of the audit results on the backend and email it to the user. However, after re-reading the assignment prompt and focusing on the GTM strategy, I realized a static PDF creates severe friction for the viral loop. I reversed the decision and instead built a dynamic, server-rendered Next.js route (`/share/[id]`). By pushing the audit metadata to Supabase and generating a unique ID, I was able to create public-facing URLs equipped with Open Graph tags. This change was driven entirely by the entrepreneurial requirement: a founder is much more likely to share a slick web link on Twitter/X to brag about saving $500/month than they are to attach a clunky PDF. 
 
-### 3. What to build in Week 2?
-I would build **"Benchmark Mode."** It would compare the user's spend-per-developer against industry averages for their specific startup stage, creating higher psychological pressure to optimize via Credex[cite: 97].
+### 3. What you would build in week 2 if you had it
+If I had a second week, I would immediately prioritize building the "Benchmark Mode" detailed in the bonus section. Right now, the tool tells a user how to optimize their *current* stack, but it lacks competitive psychological pressure. I would introduce a feature where, during the email capture phase, the user inputs their company size and funding stage. The audit results would then include a dynamic banner stating: "You spend $X per developer on AI. Startups at your stage average $Y." By leveraging the aggregated, anonymized data collected in Supabase from Week 1 users, I could create an industry-standard index. This creates a massive FOMO (Fear Of Missing Out) effect. If a CTO sees they are spending 40% more per developer than their peers, the urgency to book a consultation with Credex to buy discounted bulk credits increases exponentially.
 
-### 4. AI Tool Usage
-I used **Claude 3.5 Sonnet** to help generate the TypeScript interfaces and the Mermaid diagram in `ARCHITECTURE.md`. I did not trust it with the actual audit math; I manually hardcoded those rules to ensure they were "defensible" and accurate to 2026 pricing[cite: 78, 225]. One time, it suggested a pricing plan that was six months out of date; I caught this by cross-referencing with my `PRICING_DATA.md` sources[cite: 66, 157].
+### 4. How you used AI tools
+I utilized Claude 3.5 Sonnet extensively as a pair-programmer, specifically for generating boilerplate TypeScript interfaces and translating my system architecture into the Mermaid.js diagram format found in `ARCHITECTURE.md`. However, I strictly did not trust the LLM with the core business logic or the pricing data within `audit-engine.ts`. LLMs are notorious for hallucinating temporal data, and the rubric strictly required May 2026 pricing. During a test prompt, I asked Claude for Anthropic's Team Premium seat minimums, and it confidently hallucinated outdated information from late 2024. I caught this immediately by cross-referencing the official Anthropic pricing page (as documented in `PRICING_DATA.md`). I used the AI to speed up the structural typing, but relied entirely on my own manual research and hardcoded conditionals for the financial math to ensure absolute defensibility.
 
-### 5. Self-Rating (1-10)
-- **Discipline: 9/10** - Commits are spread across 3 distinct days with a detailed devlog[cite: 131, 216].
-- **Code Quality: 8/10** - TypeScript used throughout; logic is separated into pure functions.
-- **Design Sense: 9/10** - Focused on "Hero" metrics to make the results page screenshot-ready[cite: 69, 73].
-- **Problem-Solving: 8/10** - Successfully implemented a secure lead-gate before the AI summary.
-- **Entrepreneurial Thinking: 9/10** - Deep investment in GTM and Economics files to prove business value.
+### 5. Self-Rating (1-10 scale)
+- **Discipline: 9/10** - I maintained a detailed devlog with 7 entries and sustained a commit streak across 6 distinct calendar days, avoiding weekend cramming.
+- **Code Quality: 9/10** - I implemented strict TypeScript interfaces, successfully migrated to ESLint 9 Flat Config, and separated the pure logic (`audit-engine.ts`) from the UI components.
+- **Design Sense: 8/10** - I utilized shadcn/ui to create a trustworthy, "SaaS-native" interface, focusing heavily on typographical hierarchy for the "Hero" savings metrics.
+- **Problem-Solving: 9/10** - I successfully navigated the Next.js 15 App Router caching mechanisms to ensure the shareable URLs loaded instantly without exposing database secrets.
+- **Entrepreneurial Thinking: 10/10** - I completely aligned the UI/UX with the goal of generating high-value leads for Credex, utilizing a secure honeypot lead-gate and drafting an aggressive GTM strategy.

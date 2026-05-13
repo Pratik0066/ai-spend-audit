@@ -1,24 +1,33 @@
 name: CI Workflow
-on: [push]
+on: 
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
 
 jobs:
   build-and-test:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
-        uses: actions/checkout@v4 # Modern version for current git standards
+        uses: actions/checkout@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4 # Must be setup-node, not checkout
+        uses: actions/setup-node@v4
         with:
-          node-version: '20' # Matches your local Node.js version
+          node-version: '20' 
           cache: 'npm'
 
       - name: Install Dependencies
-        run: npm ci # Better for CI than 'npm install'
+        run: npm ci
 
       - name: Run Lint
-        run: npm run lint
+        # Bypassing the 'next lint' directory bug by calling eslint directly
+        run: npx eslint . 
 
       - name: Run Tests
         run: npm test
+
+      - name: Verify Production Build
+        # CRITICAL: Ensures the app actually compiles before allowing a merge
+        run: npm run build

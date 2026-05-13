@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import { useForm, useFieldArray } from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form'; // Added Controller
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Label } from '@/components/ui/label';
 import { Trash2, PlusCircle, Sparkles, Calendar } from 'lucide-react';
 import { runAudit } from '@/lib/audit-engine';
-import { AuditResult, ToolInput } from '@/lib/types'; // Ensure ToolInput is exported from your types
+import { AuditResult, ToolInput } from '@/lib/types';
 import { LeadCapture } from './lead-capture';
 
 interface AuditFormData {
@@ -23,7 +23,7 @@ export function AuditForm() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [shareId, setShareId] = useState<string | null>(null);
 
-  const { register, control, handleSubmit, watch, setValue, reset } = useForm<AuditFormData>({
+  const { register, control, handleSubmit, watch, reset } = useForm<AuditFormData>({
     defaultValues: {
       tools: [{ name: 'Cursor', tier: 'Pro', monthlySpend: 20, seatCount: 1 }]
     }
@@ -92,21 +92,30 @@ export function AuditForm() {
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
               <div className="space-y-2">
                 <Label>AI Tool</Label>
-                <Select 
-                  defaultValue={field.name} 
-                  onValueChange={(val) => setValue(`tools.${index}.name`, val as typeof field.name)}
-                >
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Cursor">Cursor</SelectItem>
-                    <SelectItem value="Claude">Claude</SelectItem>
-                    <SelectItem value="ChatGPT">ChatGPT</SelectItem>
-                    <SelectItem value="Copilot">GitHub Copilot</SelectItem>
-                  </SelectContent>
-                </Select>
+                {/* PRODUCTION FIX: 
+                  Wrapped the controlled Select component in a Controller to ensure 
+                  react-hook-form properly tracks state and prevents the "uncontrolled 
+                  to controlled" warning during re-renders. 
+                */}
+                <Controller
+                  control={control}
+                  name={`tools.${index}.name`}
+                  render={({ field: { onChange, value } }) => (
+                    <Select onValueChange={onChange} value={value} defaultValue={value}>
+                      <SelectTrigger><SelectValue placeholder="Select a tool" /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Cursor">Cursor</SelectItem>
+                        <SelectItem value="Claude">Claude</SelectItem>
+                        <SelectItem value="ChatGPT">ChatGPT</SelectItem>
+                        <SelectItem value="Copilot">GitHub Copilot</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
               </div>
               <div className="space-y-2">
                 <Label>Monthly Spend ($)</Label>
+                {/* Native inputs are fine being uncontrolled with register */}
                 <Input type="number" {...register(`tools.${index}.monthlySpend`, { valueAsNumber: true })} />
               </div>
               <div className="space-y-2">
@@ -128,6 +137,7 @@ export function AuditForm() {
         </div>
       </form>
 
+      {/* Results Rendering - Unchanged as it was already solid */}
       {results.length > 0 && (
         <div className="mt-12 space-y-8 border-t pt-10 animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
